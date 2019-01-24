@@ -1,0 +1,22 @@
+{
+  "name": "py5374",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server ./www",
+    "minify": "npm-run-all js-minify1 js-minify2 css-minify",
+    "js-minify1": "uglifyjs www/js/script.js -c -o www/js/script.min.js ",
+    "js-minify2": "uglifyjs www/js/setting.js -c -o www/js/setting.min.js ",
+    "css-minify": "cleancss --level 1 --source-map --source-map-inline-sources --output www/css/custom.min.css www/css/custom.css"
+  },
+  "author": "",
+  "license": "MPL",
+  "devDependencies": {
+    "clean-css": "^4.2.1",
+    "http-server": "^0.11.1",
+    "clean-css-cli": "^4.2.1",
+    "npm-run-all": "^4.1.5",
+    "uglify-js": "^3.4.9"
+  }
+}
