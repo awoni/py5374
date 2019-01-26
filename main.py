@@ -30,12 +30,17 @@ class MyCalendar:
             self.shift.append(ts.groupby(pd.Grouper(freq='M')))
         self.year = [ti_shift[ti_shift.weekday == i].to_series() for i in range(7)]
 
-    def get_every_week(self, weekday):
+    def get_every_week(self, weekday, monthlist=None):
         """
         :param weekday: 曜日
         :return:
         """
-        return self.year[weekday]
+        if monthlist is None:
+            return self.year[weekday]
+        else:
+            ps = self.year[weekday]
+            pt = ps.dt.month
+            return ps[pt.isin(monthlist)]
 
     def get_each_week(self, weekday, interval, nth):
         """
@@ -90,7 +95,7 @@ def every_week(trash_str, monthlist=None):
     trash_str: ゴミのカテゴリの記述
     """
     label = f'毎週{trash_str}曜日'
-    colle_date = my_calendar.get_every_week([weekday_dic[trash_str]], monthlist)
+    colle_date = my_calendar.get_every_week(weekday_dic[trash_str], monthlist)
     return label, colle_date, ''
 
 
@@ -126,7 +131,7 @@ def nth_week(trash_str, monthlist=None):
     """
     label = f'第{trash_str[1]}{trash_str[0]}曜日'
     if config.WEEKSHIFT:
-        colle_date = my_calendar.get_nth_week(weekday_dic[trash_str[0]], trash_str[1], monthlist)
+        colle_date = my_calendar.get_nth_week(weekday_dic[trash_str[0]], int(trash_str[1]), monthlist)
     else:
         colle_date = my_calendar.get_nth_week(weekday_dic[trash_str[0]], trash_str[1], monthlist)
     return label, colle_date, ''
@@ -136,12 +141,12 @@ def get_month_list(n, trashs, a):
     monthlist = []
     if len(a) > 1:
         if re.fullmatch(r'([1-9]|1[0-2])', a[1:]):
-            monthlist.append(a[1:])
+            monthlist.append(int(a[1:]))
         else:
             return []
     while n + 1 < len(trashs) and re.fullmatch(r'([1-9]|1[0-2])', trashs[n + 1]):
         n = n + 1
-        monthlist.append(trashs[n])
+        monthlist.append(int(trashs[n]))
     return n, monthlist
 
 
