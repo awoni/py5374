@@ -6,6 +6,8 @@ HOLIDAY = pd.DatetimeIndex(['2018-12-31', '2019-01-01', '2019-01-02', '2019-01-0
 START_DATE = '2018-4-1'
 # 計算期間の終了日
 END_DATE = '2019-4-30'
+# 休止期間なら週をずらすときは、true。金沢の仕様は、true。
+WEEKSHIFT = True
 # 出力先
 OUTPUT = 'www/data'
 

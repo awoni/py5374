@@ -79,13 +79,18 @@ def csv2json():
     target.to_json(os.path.join(config.OUTPUT, 'target.json'), orient='records', force_ascii=False)
 
 
-def every_week(trash_str):
+def xlsx2json():
+    areas = pd.read_excel('data/area.xlsx')
+    areas.to_json('data/area1.json', orient='records', force_ascii=False)
+
+
+def every_week(trash_str, monthlist=None):
     """
     毎週の処理
     trash_str: ゴミのカテゴリの記述
     """
     label = f'毎週{trash_str}曜日'
-    colle_date = my_calendar.get_every_week([weekday_dic[trash_str]])
+    colle_date = my_calendar.get_every_week([weekday_dic[trash_str]], monthlist)
     return label, colle_date, ''
 
 
@@ -104,9 +109,9 @@ def each_week(trash_str):
                 label = str(interval) + '週毎'
             else:
                 return 'エラー', pd.Series(), 'n週毎のnは2以上の整数'
-            w, p = my_calendar.get_loc_year(match[2])
+            w, nth = my_calendar.get_loc_year(match[2])
             label += weekday_list[w] + '曜日'
-            colle_date = my_calendar.year[w][p::interval]
+            colle_date = my_calendar.get_each_week(w, interval, nth)
             return label, colle_date, ''
         except:
             return 'エラー', pd.Series(), 'n週毎の開始日に誤り'
@@ -114,12 +119,30 @@ def each_week(trash_str):
         return 'エラー', pd.Series(), 'n週毎の記述に誤り'
 
 
-def get_trash(trash_str):
-    if trash_str in weekday_dic:
-        return every_week(trash_str)
-    elif trash_str[0] == 'e':
-        return each_week(trash_str)
-    return 'エラー', pd.Series(), '対応する処理がありません'
+def nth_week(trash_str, monthlist=None):
+    """
+    第n曜日の処理
+    trash_str: ゴミのカテゴリの記述
+    """
+    label = f'第{trash_str[1]}{trash_str[0]}曜日'
+    if config.WEEKSHIFT:
+        colle_date = my_calendar.get_nth_week(weekday_dic[trash_str[0]], trash_str[1], monthlist)
+    else:
+        colle_date = my_calendar.get_nth_week(weekday_dic[trash_str[0]], trash_str[1], monthlist)
+    return label, colle_date, ''
+
+
+def get_month_list(n, trashs, a):
+    monthlist = []
+    if len(a) > 1:
+        if re.fullmatch(r'([1-9]|1[0-2])', a[1:]):
+            monthlist.append(a[1:])
+        else:
+            return []
+    while n + 1 < len(trashs) and re.fullmatch(r'([1-9]|1[0-2])', trashs[n + 1]):
+        n = n + 1
+        monthlist.append(trashs[n])
+    return n, monthlist
 
 
 def get_trash_model(trash_str):
@@ -132,10 +155,46 @@ def get_trash_model(trash_str):
 
     dayLabel = []
     dayList = []
-    for trash in trashs:
-        label, l, error_message = get_trash(trash)
+    n = 0
+    while n < len(trashs):
+        error_mesage = '形式エラー'
+        trash = trashs[n]
+        if trashs[n][0] in weekday_dic:
+            if len(trash) == 1:
+                label, colle_date, error_mesage = every_week(trash)
+            elif trash[1] == ':':
+                n, monthlist = get_month_list(n, trashs, trash[1:])
+                if len(monthlist) > 0:
+                    label, colle_date, error_mesage = every_week(trash[0], monthlist)
+            elif trash[1] in ("1", "2", "3", "4", "5"):
+                if len(trash) == 2:
+                    label, colle_date, error_mesage = nth_week(trash)
+                elif trash[2] == ':':
+                    n, monthlist = get_month_list(n, trashs, trash[1:])
+                    if len(monthlist) > 0:
+                        label, colle_date, error_mesage = nth_week(trash[:2], monthlist)
+        elif trash_str[n] == 'e':
+            label, colle_date, error_mesage = each_week(trash)
+        elif re.fullmatch(r'\d{8}', trash):
+            label = '不定期'
+            list_ = [trash]
+            while n + 1 < len(trashs) and re.fullmatch(r'\d{8}', trashs[n + 1]):
+                n += 1
+                list_.append(trashs[n])
+            try:
+                colle_date = pd.DatetimeIndex(list_).to_series()
+            except:
+                error_mesage = f'{list_} は正しい日付でない'
+
+        if error_mesage != '':
+            print(f'{error_mesage}: {trash}')
+            n += 1
+            continue
+
         dayLabel.append(label)
-        dayList.append(l)
+        dayList.append(colle_date)
+        n += 1
+
     dl = pd.concat(dayList).sort_values().astype(str)
     return ' '.join(dayLabel), dl, remark
 
@@ -143,7 +202,7 @@ def get_trash_model(trash_str):
 def get_area_days():
     area_days = pd.read_csv('data/area_days.csv')
     for i, area_day in area_days.iterrows():
-        ca = area_day['収集地区']
+        area_label = area_day['収集地区']
         trash = []
         for item in area_day.index[1:]:
             dayLabel, dayList, remark = get_trash_model(area_day[item])
@@ -152,14 +211,16 @@ def get_area_days():
                     'label': item,
                     'dayLabel': dayLabel,
                     'dayList': dayList.values.tolist(),
+                    'trash_str': area_day[item],
                     'remark': remark
                 })
-        with open(os.path.join(config.OUTPUT, f'{ca}.json'), 'w') as f:
+        with open(os.path.join(config.OUTPUT, f'{area_label}.json'), 'w') as f:
             json.dump(trash, f, indent=2, ensure_ascii=False)
 
 
 def main():
     csv2json()
+    xlsx2json()
     get_area_days()
 
 
