@@ -8,3 +8,10 @@ START_DATE = '2018-4-1'
 END_DATE = '2019-4-30'
 # 出力先
 OUTPUT = 'www/data'
+
+'''
+以下は変更がある場合の処理用です
+'''
+CHANGE_DATA = '2018-2-4'
+INPUT_OLD = 'www/data'
+INPUT_NEW = 'www/data'
