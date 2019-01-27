@@ -44,3 +44,13 @@ print(dayList)
 dayLabel, dayList, remark = main.get_trash_model('月1')
 print(dayLabel)
 print(dayList)
+
+"""
+毎月収集が無いゴミ
+
+毎月収集が無いゴミは対象月をコロン(:)の後に指定できます。 例えば、4、6、8、10、12、2月の偶数月の第2火曜、第4金曜の場合には、 火2 金4:4 6 8 10 12 2 のように記述します。(茨城町版仕様より追加)
+"""
+
+dayLabel, dayList, remark = main.get_trash_model('金4:4 6 8 10 12 2')
+print(dayLabel)
+print(dayList)

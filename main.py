@@ -75,6 +75,115 @@ class MyCalendar:
             return ps[pt.isin(monthlist)]
 
 
+def get_month_list(ss0):
+    monthlist = []
+    ss = []
+    for i in range(len(ss0)):
+        if re.fullmatch(r'([1-9]|1[0-2])', ss0[i]):
+            monthlist.append(int(ss0[i]))
+        else:
+            ss = ss0[i:]
+            break
+    return monthlist, ss
+
+
+class CollectionDate:
+    def __init__(self, trash_str, week_shift = config.WEEKSHIFT):
+        self.dayLabel = []
+        self.dayList = []
+        self.remark = None
+        self.error_message = ''
+        self.week_shift = week_shift
+
+        str_list = trash_str.split(':')
+        trashs = str_list[0].split()
+        list_of_monthlist = []
+        for i, s in enumerate(str_list[1:]):
+            monthlist, ss = get_month_list(s.split())
+            trashs[-1] = trashs[-1] + f'%{i}'
+            list_of_monthlist.append(monthlist)
+            trashs.append(ss)
+
+        irregular = []
+        for trash in trashs:
+            if trash[0] in weekday_dic:
+                self.set_week(trash, list_of_monthlist)
+            elif trash[0] == 'e':
+                self.each_week(trash)
+            elif re.fullmatch(r'\d{8}', trash):
+                irregular.append(trash)
+            elif trash[0] == '*':
+                self.remark = trash[1:]
+            else:
+                self.error_message = '正しい形式ではない'
+
+            if self.error_message != '':
+                print(f'{self.error_mesage}: {trash}')
+                self.dayLabel = ['エラー']
+                break
+
+        if any(irregular):
+            try:
+                self.dayList.append(pd.DatetimeIndex(irregular).to_series())
+                self.dayLabel.append('不定期')
+            except:
+                self.error_mesage = f'{irregular} は正しい日付でない'
+
+    def set_week(self, trash, list_of_monthlist):
+        if len(trash) == 1:
+            return self.every_week(trash)
+        elif trash[1] == '%':
+            return self.every_week(trash[0], list_of_monthlist[int(trash[1:])])
+        elif trash[1] in ("1", "2", "3", "4", "5"):
+            if len(trash) == 2:
+                return self.nth_week(trash)
+            elif trash[2] == '%':
+                return self.nth_week(trash[:2], list_of_monthlist[int(trash[2:])])
+        self.error_message = '正しい形式ではない'
+
+    def every_week(self, trash, monthlist=None):
+        """
+        毎週の処理
+        trash_str: ゴミのカテゴリの記述
+        """
+        self.dayLabel.append(f'毎週{trash}曜日')
+        self.dayList.append(my_calendar.get_every_week(weekday_dic[trash], monthlist))
+
+    def nth_week(self, trash, monthlist=None):
+        """
+        第n曜日の処理
+        trash_str: ゴミのカテゴリの記述
+        """
+        self.dayLabel.append(f'第{trash[1]}{trash[0]}曜日')
+        if self.week_shift:
+            self.dayList.append(my_calendar.get_nth_week(weekday_dic[trash[0]], int(trash[1]) - 1, monthlist))
+        else:
+            self.dayList.append(my_calendar.get_nth_week(weekday_dic[trash[0]], int(trash[1]) - 1, monthlist))
+
+    def each_week(self, trash):
+        """
+        隔週、4週毎の処理
+        trash_str: ゴミのカテゴリの記述
+        """
+        match = re.search(r'^e(\d+)w(\d*)$', trash)
+        if match:
+            interval = int(match[1])
+            try:
+                if interval == 2:
+                    s = '隔週'
+                elif interval > 2:
+                    s = str(interval) + '週毎'
+                else:
+                    self.error_message = 'n週毎のnは2以上の整数'
+                w, nth = my_calendar.get_loc_year(match[2])
+                self.dayLabel.append(s + weekday_list[w] + '曜日')
+                self.dayList.append(my_calendar.get_each_week(w, interval, nth))
+            except:
+                self.error_message = 'n週毎の開始日に誤り'
+        else:
+            self.error_message = 'n週毎の記述に誤り'
+
+
 def csv2json():
     areas = pd.read_csv('data/area.csv')
     areas.to_json('data/area.json', orient='records', force_ascii=False)
@@ -89,135 +198,20 @@ def xlsx2json():
     areas.to_json('data/area1.json', orient='records', force_ascii=False)
 
 
-def every_week(trash_str, monthlist=None):
-    """
-    毎週の処理
-    trash_str: ゴミのカテゴリの記述
-    """
-    label = f'毎週{trash_str}曜日'
-    colle_date = my_calendar.get_every_week(weekday_dic[trash_str], monthlist)
-    return label, colle_date, ''
-
-
-def each_week(trash_str):
-    """
-    隔週、4週毎の処理
-    trash_str: ゴミのカテゴリの記述
-    """
-    match = re.search(r'^e(\d+)w(\d*)$', trash_str)
-    if match:
-        interval = int(match[1])
-        try:
-            if interval == 2:
-                label = '隔週'
-            elif interval > 2:
-                label = str(interval) + '週毎'
-            else:
-                return 'エラー', pd.Series(), 'n週毎のnは2以上の整数'
-            w, nth = my_calendar.get_loc_year(match[2])
-            label += weekday_list[w] + '曜日'
-            colle_date = my_calendar.get_each_week(w, interval, nth)
-            return label, colle_date, ''
-        except:
-            return 'エラー', pd.Series(), 'n週毎の開始日に誤り'
-    else:
-        return 'エラー', pd.Series(), 'n週毎の記述に誤り'
-
-
-def nth_week(trash_str, monthlist=None):
-    """
-    第n曜日の処理
-    trash_str: ゴミのカテゴリの記述
-    """
-    label = f'第{trash_str[1]}{trash_str[0]}曜日'
-    if config.WEEKSHIFT:
-        colle_date = my_calendar.get_nth_week(weekday_dic[trash_str[0]], int(trash_str[1]), monthlist)
-    else:
-        colle_date = my_calendar.get_nth_week(weekday_dic[trash_str[0]], trash_str[1], monthlist)
-    return label, colle_date, ''
-
-
-def get_month_list(n, trashs, a):
-    monthlist = []
-    if len(a) > 1:
-        if re.fullmatch(r'([1-9]|1[0-2])', a[1:]):
-            monthlist.append(int(a[1:]))
-        else:
-            return []
-    while n + 1 < len(trashs) and re.fullmatch(r'([1-9]|1[0-2])', trashs[n + 1]):
-        n = n + 1
-        monthlist.append(int(trashs[n]))
-    return n, monthlist
-
-
-def get_trash_model(trash_str):
-    trashs = trash_str.split()
-    if trashs[-1].startswith('*'):
-        remark = int(trashs[-1][1:])
-        trashs.pop(-1)
-    else:
-        remark = None
-
-    dayLabel = []
-    dayList = []
-    n = 0
-    while n < len(trashs):
-        error_mesage = '形式エラー'
-        trash = trashs[n]
-        if trashs[n][0] in weekday_dic:
-            if len(trash) == 1:
-                label, colle_date, error_mesage = every_week(trash)
-            elif trash[1] == ':':
-                n, monthlist = get_month_list(n, trashs, trash[1:])
-                if len(monthlist) > 0:
-                    label, colle_date, error_mesage = every_week(trash[0], monthlist)
-            elif trash[1] in ("1", "2", "3", "4", "5"):
-                if len(trash) == 2:
-                    label, colle_date, error_mesage = nth_week(trash)
-                elif trash[2] == ':':
-                    n, monthlist = get_month_list(n, trashs, trash[1:])
-                    if len(monthlist) > 0:
-                        label, colle_date, error_mesage = nth_week(trash[:2], monthlist)
-        elif trash_str[n] == 'e':
-            label, colle_date, error_mesage = each_week(trash)
-        elif re.fullmatch(r'\d{8}', trash):
-            label = '不定期'
-            list_ = [trash]
-            while n + 1 < len(trashs) and re.fullmatch(r'\d{8}', trashs[n + 1]):
-                n += 1
-                list_.append(trashs[n])
-            try:
-                colle_date = pd.DatetimeIndex(list_).to_series()
-            except:
-                error_mesage = f'{list_} は正しい日付でない'
-
-        if error_mesage != '':
-            print(f'{error_mesage}: {trash}')
-            n += 1
-            continue
-
-        dayLabel.append(label)
-        dayList.append(colle_date)
-        n += 1
-
-    dl = pd.concat(dayList).sort_values().astype(str)
-    return ' '.join(dayLabel), dl, remark
-
-
 def get_area_days():
     area_days = pd.read_csv('data/area_days.csv')
     for i, area_day in area_days.iterrows():
         area_label = area_day['収集地区']
         trash = []
         for item in area_day.index[1:]:
-            dayLabel, dayList, remark = get_trash_model(area_day[item])
+            collection_date = CollectionDate(area_day[item])
+            dl = pd.concat(collection_date.dayList).sort_values().astype(str)
             trash.append(
                 {
                     'label': item,
-                    'dayLabel': dayLabel,
-                    'dayList': dayList.values.tolist(),
-                    'trash_str': area_day[item],
-                    'remark': remark
+                    'dayLabel': ' '.join(collection_date.dayLabel),
+                    'dayList': dl.values.tolist(),
+                    'remark': collection_date.remark
                 })
         with open(os.path.join(config.OUTPUT, f'{area_label}.json'), 'w') as f:
             json.dump(trash, f, indent=2, ensure_ascii=False)
