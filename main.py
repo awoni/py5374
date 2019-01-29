@@ -144,7 +144,7 @@ class CollectionDate:
         毎週の処理
         trash_str: ゴミのカテゴリの記述
         """
-        self.dayLabel.append(f'毎週{trash}曜日')
+        self.dayLabel.append(f'毎週{trash}曜日' + ('' if monthlist is None else '(' + ','.join(map(str, monthlist)) + '月)'))
         self.dayList.append(my_calendar.get_every_week(weekday_dic[trash], monthlist))
 
     def nth_week(self, trash, monthlist=None):
@@ -152,7 +152,7 @@ class CollectionDate:
         第n曜日の処理
         trash_str: ゴミのカテゴリの記述
         """
-        self.dayLabel.append(f'第{trash[1]}{trash[0]}曜日')
+        self.dayLabel.append(f'第{trash[1]}{trash[0]}曜日' + ('' if monthlist is None else '(' + ','.join(map(str, monthlist)) + '月)'))
         if self.week_shift:
             self.dayList.append(my_calendar.get_nth_week(weekday_dic[trash[0]], int(trash[1]) - 1, monthlist))
         else:
@@ -173,7 +173,8 @@ class CollectionDate:
                     s = str(interval) + '週毎'
                 else:
                     self.error_message = 'n週毎のnは2以上の整数'
-                w, nth = my_calendar.get_loc_year(match[2])
+                    return
+                w, nth = my_calendar.get_loc_year(match[2], interval)
                 self.dayLabel.append(s + weekday_list[w] + '曜日')
                 self.dayList.append(my_calendar.get_each_week(w, interval, nth))
             except:

@@ -9,11 +9,5 @@ END_DATE = '2019-4-30'
 # 休止期間なら週をずらすときは、true。金沢の仕様は、true。
 WEEKSHIFT = True
 # 出力先
-OUTPUT = 'www/data'
+OUTPUT = 'out'
 
-'''
-以下は変更がある場合の処理用です
-'''
-CHANGE_DATA = '2018-2-4'
-INPUT_OLD = 'www/data'
-INPUT_NEW = 'www/data'

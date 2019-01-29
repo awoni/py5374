@@ -130,7 +130,7 @@ $(function() {
             '<div class="accordion-group" id="accordion-group' + d_no + '">' +
             '<div class="accordion-heading">' +
             '<a class="accordion-toggle" style="height:' + accordion_height + 'px" data-toggle="collapse" data-parent="#accordion" href="#collapse' + i + '">' +
-            '<div class="left-day">' + t.leftDayText + '</div>' +
+            '<div class="left-day">' + t.leftDayText + ' (' + t.mostRecentText + ')' + '</div>' +
             '<div class="accordion-table" >';
         if (ableSVG && SVGLabel) {
           accordionHTML += '<img src="' + description.styles + '" alt="' + description.label + '"  />';
@@ -138,7 +138,7 @@ $(function() {
           accordionHTML += '<p class="text-center">' + description.label + "</p>";
         }
         accordionHTML += "</div>" +
-            '<h6><p class="text-left date">' + t.dayLabel + " " + t.mostRecentText + "</p></h6>" +
+            '<h6><p class="text-left date">' + (t.remark == null ? "" : t.remark) + '<br />' + t.dayLabel + "</p></h6>" +
             "</a>" +
             "</div>" +
             '<div id="collapse' + i + '" class="accordion-body collapse">' +
