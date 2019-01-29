@@ -88,7 +88,7 @@ def get_month_list(ss0):
 
 
 class CollectionDate:
-    def __init__(self, trash_str, week_shift = config.WEEKSHIFT):
+    def __init__(self, trash_str, week_shift=config.WEEKSHIFT):
         self.dayLabel = []
         self.dayList = []
         self.remark = None
@@ -102,7 +102,7 @@ class CollectionDate:
             monthlist, ss = get_month_list(s.split())
             trashs[-1] = trashs[-1] + f'%{i}'
             list_of_monthlist.append(monthlist)
-            trashs.append(ss)
+            trashs.extend(ss)
 
         irregular = []
         for trash in trashs:
@@ -118,27 +118,25 @@ class CollectionDate:
                 self.error_message = '正しい形式ではない'
 
             if self.error_message != '':
-                print(f'{self.error_mesage}: {trash}')
-                self.dayLabel = ['エラー']
-                break
+                return
 
         if any(irregular):
             try:
                 self.dayList.append(pd.DatetimeIndex(irregular).to_series())
                 self.dayLabel.append('不定期')
             except:
-                self.error_mesage = f'{irregular} は正しい日付でない'
+                self.error_message = f'{irregular} は正しい日付でない'
 
     def set_week(self, trash, list_of_monthlist):
         if len(trash) == 1:
             return self.every_week(trash)
         elif trash[1] == '%':
-            return self.every_week(trash[0], list_of_monthlist[int(trash[1:])])
+            return self.every_week(trash[0], list_of_monthlist[int(trash[2:])])
         elif trash[1] in ("1", "2", "3", "4", "5"):
             if len(trash) == 2:
                 return self.nth_week(trash)
             elif trash[2] == '%':
-                return self.nth_week(trash[:2], list_of_monthlist[int(trash[2:])])
+                return self.nth_week(trash[:2], list_of_monthlist[int(trash[3:])])
         self.error_message = '正しい形式ではない'
 
     def every_week(self, trash, monthlist=None):
@@ -204,14 +202,18 @@ def get_area_days():
         area_label = area_day['収集地区']
         trash = []
         for item in area_day.index[1:]:
-            collection_date = CollectionDate(area_day[item])
-            dl = pd.concat(collection_date.dayList).sort_values().astype(str)
+            cd = CollectionDate(area_day[item])
+            if cd.error_message != "":
+                print(f'地区「{area_label}」の収集日の書式にエラー、ゴミの種類: {item } 、エラーメッセージ: {cd.error_message}')
+                cd.dayLabel = 'エラー'
+
+            dl = pd.concat(cd.dayList).sort_values().astype(str)
             trash.append(
                 {
                     'label': item,
-                    'dayLabel': ' '.join(collection_date.dayLabel),
+                    'dayLabel': ' '.join(cd.dayLabel),
                     'dayList': dl.values.tolist(),
-                    'remark': collection_date.remark
+                    'remark': cd.remark
                 })
         with open(os.path.join(config.OUTPUT, f'{area_label}.json'), 'w') as f:
             json.dump(trash, f, indent=2, ensure_ascii=False)

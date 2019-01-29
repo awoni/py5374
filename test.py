@@ -37,13 +37,17 @@ main.my_calendar = cal
     毎月第1週月曜の場合は、月1と記述する。
 """
 
-dayLabel, dayList, remark = main.get_trash_model('月 木')
-print(dayLabel)
-print(dayList)
+cd = main.CollectionDate('月 木')
+print(cd.error_message)
+print(cd.dayLabel)
+dl = pd.concat(cd.dayList).sort_values().astype(str)
+dl1 = dl.values.tolist()
+print(dl1[:10])
 
-dayLabel, dayList, remark = main.get_trash_model('月1')
-print(dayLabel)
-print(dayList)
+cd = main.CollectionDate('月1')
+print(cd.error_message)
+print(cd.dayLabel)
+print(cd.dayList)
 
 """
 毎月収集が無いゴミ
@@ -51,6 +55,7 @@ print(dayList)
 毎月収集が無いゴミは対象月をコロン(:)の後に指定できます。 例えば、4、6、8、10、12、2月の偶数月の第2火曜、第4金曜の場合には、 火2 金4:4 6 8 10 12 2 のように記述します。(茨城町版仕様より追加)
 """
 
-dayLabel, dayList, remark = main.get_trash_model('金4:4 6 8 10 12 2')
-print(dayLabel)
-print(dayList)
+cd = main.CollectionDate('金4:4 6 8 10 12 2')
+print(cd.error_message)
+print(cd.dayLabel)
+print(cd.dayList)
