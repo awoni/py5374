@@ -199,7 +199,7 @@ def xlsx2json():
 
 def get_remarks():
     remarks = {}
-    with open('data/remarks.csv', 'r') as f:
+    with open('data/remarks.csv', newline='') as f:
         rd = csv.reader(f, delimiter=',')
         for row in rd:
             remarks[row[0]] = row[1]
