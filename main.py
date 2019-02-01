@@ -2,6 +2,7 @@ import os
 import json
 import pandas as pd
 import re
+import csv
 import dateutil
 import config
 
@@ -88,7 +89,7 @@ def get_month_list(ss0):
 
 
 class CollectionDate:
-    def __init__(self, trash_str, week_shift=config.WEEKSHIFT):
+    def __init__(self, trash_str, week_shift=config.WEEKSHIFT, remarks={}):
         self.dayLabel = []
         self.dayList = []
         self.remark = None
@@ -113,7 +114,7 @@ class CollectionDate:
             elif re.fullmatch(r'\d{8}', trash):
                 irregular.append(trash)
             elif trash[0] == '*':
-                self.remark = trash[1:]
+                self.remark = remarks[trash[1:]]
             else:
                 self.error_message = '正しい形式ではない'
 
@@ -196,14 +197,22 @@ def xlsx2json():
     areas = pd.read_excel('data/area.xlsx')
     areas.to_json('data/area1.json', orient='records', force_ascii=False)
 
+def get_remarks():
+    remarks = {}
+    with open('data/remarks.csv', 'r') as f:
+        rd = csv.reader(f, delimiter=',')
+        for row in rd:
+            remarks[row[0]] = row[1]
+    return remarks
 
 def get_area_days():
+    remarks = get_remarks()
     area_days = pd.read_csv('data/area_days.csv')
     for i, area_day in area_days.iterrows():
         area_label = area_day['収集地区']
         trash = []
         for item in area_day.index[1:]:
-            cd = CollectionDate(area_day[item])
+            cd = CollectionDate(area_day[item], remarks=remarks)
             if cd.error_message != "":
                 print(f'地区「{area_label}」の収集日の書式にエラー、ゴミの種類: {item } 、エラーメッセージ: {cd.error_message}')
                 cd.dayLabel = 'エラー'

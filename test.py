@@ -59,3 +59,16 @@ cd = main.CollectionDate('金4:4 6 8 10 12 2')
 print(cd.error_message)
 print(cd.dayLabel)
 print(cd.dayList)
+
+"""
+収集日について、特別な条件がある場合、例えば「一部地域(渋谷1・2・3丁目)で収集曜日が異なります。」などという条件がある場合、
+data/remarks.csv を用意し注意事項を追加した後、* につづいてremarks.csv のID番号を記述してください。
+つまり、remarks.csv のID1番を表示したい場合は、火 木 *1 のように記述します。(渋谷区版仕様より追加)
+"""
+
+remarks = main.get_remarks()
+cd = main.CollectionDate('火4 *1', remarks=remarks)
+print(cd.error_message)
+print(cd.dayLabel)
+print(cd.dayList)
+print(cd.remark)
