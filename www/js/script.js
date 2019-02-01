@@ -125,12 +125,14 @@ $(function() {
         var target_tag = targetHTML(description)
 
         styleHTML += '#accordion-group' + d_no + '{background-color:  ' + description.bgcolor + ';} ';
+        var strs = t.mostRecentText.match(/^\d+-(\d+)-(\d+)/);
+        var dateStr = Number(strs[1]) + '月' + Number(strs[2]) + '日';
 
         accordionHTML +=
             '<div class="accordion-group" id="accordion-group' + d_no + '">' +
             '<div class="accordion-heading">' +
             '<a class="accordion-toggle" style="height:' + accordion_height + 'px" data-toggle="collapse" data-parent="#accordion" href="#collapse' + i + '">' +
-            '<div class="left-day">' + t.leftDayText + ' (' + t.mostRecentText + ')' + '</div>' +
+            '<div class="left-day">' + t.leftDayText + ' (' + dateStr + ')' + '</div>' +
             '<div class="accordion-table" >';
         if (ableSVG && SVGLabel) {
           accordionHTML += '<img src="' + description.styles + '" alt="' + description.label + '"  />';
