@@ -197,6 +197,7 @@ def xlsx2json():
     areas = pd.read_excel('data/area.xlsx')
     areas.to_json('data/area1.json', orient='records', force_ascii=False)
 
+
 def get_remarks():
     remarks = {}
     with open('data/remarks.csv', newline='') as f:
@@ -204,6 +205,7 @@ def get_remarks():
         for row in rd:
             remarks[row[0]] = row[1]
     return remarks
+
 
 def get_area_days():
     remarks = get_remarks()

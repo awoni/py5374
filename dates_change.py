@@ -6,7 +6,8 @@ CHANGE_DATA = parse('2019-2-4')
 INPUT_OLD = 'out'
 INPUT_NEW = 'out'
 OUTPUT = 'out'
-CHANGE_REMARK = '２月4日からごみの収集日が変わります'
+CHANGE_REMARK = '２月4日からごみの収集日が変わりました'
+
 
 def main():
 
@@ -50,10 +51,12 @@ def main():
                                 day_list.append(new_day_str)
                         break
                 if new['dayLabel'] != old['dayLabel']:
-                    day_label = f"{old['dayLabel']}→{new['dayLabel']}"
+                    # day_label = f"{old['dayLabel']}→{new['dayLabel']}"
+                    day_label = f"{new['dayLabel']}"
                     remark = CHANGE_REMARK
                 elif is_change:
-                    day_label = f"{new['dayLabel']}（{str(is_change)+'週遅く' if is_change > 0 else str(-is_change)+'週早く'}なります）"
+                    # day_label = f"{new['dayLabel']}（{str(is_change)+'週遅く' if is_change > 0 else str(-is_change)+'週早く'}なります）"
+                    day_label = f"{new['dayLabel']}"
                     remark = CHANGE_REMARK
                 else:
                     day_label = f"{new['dayLabel']}"
@@ -64,7 +67,8 @@ def main():
                 day_list = new['dayList']
                 remark = None
             else:
-                day_label = f"{old['dayLabel']}→{new['dayLabel']}"
+                # day_label = f"{old['dayLabel']}→{new['dayLabel']}"
+                day_label = f"{new['dayLabel']}"
                 remark = CHANGE_REMARK
                 day_list = []
                 for old_day_str in old["dayList"]:
