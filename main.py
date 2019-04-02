@@ -185,8 +185,6 @@ class CollectionDate:
 
 
 def csv2json():
-    areas = pd.read_csv('data/area.csv')
-    areas.to_json('data/area.json', orient='records', force_ascii=False)
     description = pd.read_csv('data/description.csv')
     description.to_json('data/description.json', orient='records', force_ascii=False)
     target = pd.read_csv('data/target.csv')
@@ -195,7 +193,7 @@ def csv2json():
 
 def xlsx2json():
     areas = pd.read_excel('data/area.xlsx')
-    areas.to_json('data/area1.json', orient='records', force_ascii=False)
+    areas.to_json('data/area.json', orient='records', force_ascii=False)
 
 
 def get_remarks():
@@ -232,7 +230,7 @@ def get_area_days():
 
 
 def main():
-    csv2json()
+    #csv2json()
     xlsx2json()
     get_area_days()
 
